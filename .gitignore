@@ -24,6 +24,9 @@ venv/
 .venv/
 env/
 
+# Scratch / agent workspace
+workspace/
+
 # IDE
 .vscode/
 .idea/
