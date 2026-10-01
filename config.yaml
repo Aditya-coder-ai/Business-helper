@@ -1,0 +1,47 @@
+# ActionDesk Layer 1 — Ingestion Configuration
+
+sources:
+  gmail:
+    enabled: true
+    scopes:
+      - "https://www.googleapis.com/auth/gmail.readonly"
+    credentials_file: "credentials.json"
+    token_file: "token.json"
+
+  drive:
+    enabled: true
+    scopes:
+      - "https://www.googleapis.com/auth/drive.readonly"
+    credentials_file: "credentials.json"
+    token_file: "token.json"
+
+  quickbooks:
+    enabled: true
+    base_url: "https://quickbooks.api.intuit.com"
+    credentials_file: ".env"   # QB_CLIENT_ID, QB_CLIENT_SECRET, QB_REALM_ID, QB_REFRESH_TOKEN
+
+# How often to sync (minutes)
+sync_minutes: 15
+
+# How far back to look on first sync
+history_days: 90
+
+# Privacy / exclusion list — items matching these are NEVER ingested
+exclusions:
+  gmail:
+    labels:
+      - "TRASH"
+      - "SPAM"
+      - "CATEGORY_PROMOTIONS"
+    from_addresses:
+      - "noreply@example-excluded.com"
+
+  drive:
+    paths:
+      - "/Private"
+      - "/Trash"
+    mime_types:
+      - "application/vnd.google-apps.trash"
+
+  quickbooks:
+    entity_types: []   # e.g. ["Transfer"] if you want to skip transfers

@@ -1,0 +1,65 @@
+[project]
+name = "actiondesk-ingestion"
+version = "0.1.0"
+description = "ActionDesk Layer 1 — Read-only ingestion from Gmail, Drive, QuickBooks"
+requires-python = ">=3.10"
+dependencies = [
+    "pydantic>=2.0,<3",
+    "pyyaml>=6.0,<7",
+    "requests>=2.31,<3",
+    "google-api-python-client>=2.100,<3",
+    "google-auth-httplib2>=0.1,<1",
+    "google-auth-oauthlib>=1.0,<2",
+    "python-dateutil>=2.8,<3",
+]
+
+[tool.setuptools.packages.find]
+include = ["actiondesk*", "connectors*"]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4,<9",
+    "pytest-cov>=4.1,<6",
+    "mypy>=1.5,<2",
+    "ruff>=0.1,<1",
+    "types-PyYAML>=6.0",
+    "types-requests>=2.31",
+    "types-python-dateutil>=2.8",
+    "tabulate>=0.9,<1",
+]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+warn_return_any = true
+warn_unused_configs = false
+disallow_untyped_defs = true
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = [
+    "googleapiclient.*",
+    "google_auth_oauthlib.*",
+    "google.auth.*",
+    "google.oauth2.*",
+]
+ignore_missing_imports = true
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "S", "B", "A", "C4", "SIM"]
+ignore = [
+    "S101",   # allow assert in tests
+    "S608",   # QB query builder is safe (entity_type is from a fixed list)
+    "N803",   # userId matches Google API convention
+    "A002",   # id/format match Google API signatures
+    "SIM103", # explicit if/return is clearer for exclusion logic
+    "SIM110", # explicit loop is clearer for exclusion logic
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --tb=short"
