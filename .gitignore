@@ -35,9 +35,14 @@ workspace/
 
 # Data
 *.db
+*.db-shm
+*.db-wal
 *.sqlite
 *.sqlite3
 status.json
+
+# Generated
+powershell.bat
 
 # OS
 .DS_Store
