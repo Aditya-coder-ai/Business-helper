@@ -103,3 +103,83 @@ def sync_all(
             conn, store, dry_run=dry_run, status_path=status_path
         )
     return results
+
+
+def main() -> None:
+    """CLI to trigger live or dry-run sync."""
+    import argparse
+    import sys
+
+    from actiondesk.config import load_config
+
+    parser = argparse.ArgumentParser(description="ActionDesk Ingestion Sync")
+    parser.add_argument(
+        "--source",
+        choices=["gmail", "drive", "all"],
+        default="all",
+        help="Source to sync (default: all)",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Run without writing to the store",
+    )
+    parser.add_argument(
+        "--db",
+        default="actiondesk.db",
+        help="Path to SQLite database (default: actiondesk.db)",
+    )
+    args = parser.parse_args()
+
+    cfg = load_config()
+    db = Store(args.db)
+    connectors: list[BaseConnector] = []
+
+    if args.source in ("gmail", "all"):
+        try:
+            from actiondesk.auth import get_gmail_service
+            from connectors.gmail_connector import GmailConnector
+
+            service = get_gmail_service()
+            connectors.append(GmailConnector(service, cfg))
+        except Exception as exc:
+            logger.warning(
+                "sync.cli_source_init_failed",
+                extra={"data": {"source": "gmail", "error": str(exc)}},
+            )
+            print(f"Skipping Gmail: {exc}")
+
+    if args.source in ("drive", "all"):
+        try:
+            from actiondesk.auth import get_drive_service
+            from connectors.drive_connector import DriveConnector
+
+            service = get_drive_service()
+            connectors.append(DriveConnector(service, cfg))
+        except Exception as exc:
+            logger.warning(
+                "sync.cli_source_init_failed",
+                extra={"data": {"source": "drive", "error": str(exc)}},
+            )
+            print(f"Skipping Drive: {exc}")
+
+    if not connectors:
+        print("No connectors initialized to sync.")
+        db.close()
+        sys.exit(1)
+
+    print(f"Starting sync ({'dry-run' if args.dry_run else 'live'})...")
+    results = sync_all(connectors, db, dry_run=args.dry_run)
+    db.close()
+
+    for s, v in results.items():
+        print(
+            f"  {s}: status={v.get('status')} "
+            f"fetched={v.get('items_fetched')} "
+            f"written={v.get('items_written', 0)}"
+        )
+
+
+if __name__ == "__main__":
+    main()
+
